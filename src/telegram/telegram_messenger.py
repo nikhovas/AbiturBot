@@ -26,7 +26,7 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.message_handler(content_types=['contact'])
     async def process_get_contact(msg: types.Message):
-        await bot.send_message(msg.from_user.id, "номер телефона {}".format(msg.contact['phone_number']),
+        await bot.send_message(msg.from_user.id, "Ваш номер телефона {}.".format(msg.contact['phone_number']),
                                reply_markup=ReplyKeyboardRemove())
 
         # data base working
