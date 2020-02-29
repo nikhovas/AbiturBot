@@ -47,9 +47,10 @@ class Direction(Model):
         self.phys_tech_school = phys_tech_school
 
 
-class CompetitionInfo:
-    def __init__(self, record_id: int, user: User, direction: Direction):
+class CompetitionInfo(Model):
+    def __init__(self, record_id: int, user: User, direction: Direction, score: int):
         super().__init__(record_id)
 
         self.user = user
         self.direction = direction
+        self.score = score
