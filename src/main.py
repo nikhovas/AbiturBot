@@ -1,4 +1,4 @@
-# it is still empty...
+import asyncio
 
 if __name__ == "__main__":
-    pass
+    event_loop = asyncio.get_even_loop()
