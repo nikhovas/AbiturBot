@@ -17,3 +17,4 @@ class TelegramMessenger(Messenger):
     @self._dispatcher.message_handler(commands=['start'])
     async def process_start_command(self, msg: types.Message):
         pass
+
