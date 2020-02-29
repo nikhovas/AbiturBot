@@ -7,5 +7,5 @@ import asyncio
 # kernel: Kernel = Kernel()
 
 if __name__ == "__main__":
-    tg = TelegramMessenger(kernel)
+    tg = kernel.messenger
     tg.start_pooling()

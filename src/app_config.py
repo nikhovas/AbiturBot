@@ -14,8 +14,4 @@ BOT_CONFIG = {
 }
 
 
-
-
-
-
 kernel: Kernel = Kernel()
