@@ -6,8 +6,8 @@ class Signal:
 
 
 class RatingInCompetition(Signal):
-    def __init__(self, competition_info: CompetitionInfo):
-        self.competition_info = competition_info
+    def __init__(self, direction: Direction):
+        self.direction = direction
 
 
 class GetPhysTechSchoolsInfo(Signal):
@@ -15,4 +15,6 @@ class GetPhysTechSchoolsInfo(Signal):
         pass
 
 
-# other classes
+class GetCompetitionInfo(Signal):
+    def __init__(self, direction: Direction):
+        self.direction = direction

@@ -4,11 +4,14 @@ from typing import List
 
 
 class Database(Module):
+    async def get_user_by_phone(self, phone: str) -> User:
+        pass
+
     async def get_phys_tech_schools_info(self):
         pass
 
-    async def get_full_competition_list(self) -> List[Direction]:
+    async def get_full_competition_list(self, competition: Direction) -> List[CompetitionInfo]:
         pass
 
-    async def get_place_in_competition(self, user: User, competition: Direction) -> CompetitionInfo:
+    async def get_place_in_competition(self, user: User, competition: Direction) -> int:
         pass
