@@ -1,9 +1,9 @@
-from src.module import Module
+# from src.module import Module
 from src.models import *
 from typing import List
 
 
-class Database(Module):
+class Database:
     async def get_user_by_phone(self, phone: str) -> User:
         pass
 

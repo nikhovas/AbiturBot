@@ -1,13 +1,13 @@
-from src.module import Module, Kernel
+# from src.module import Module, Kernel
 from src.models import *
 from typing import Dict, List
 from src.signals import *
-from src.app_config import RawFiles
+# from src.app_config import kernel
+from src.conf import RawFiles
 
 
-class MessageHandler(Module):
-    def __init__(self, kernel: Kernel):
-        super().__init__(kernel)
+class MessageHandler:
+    def __init__(self, kernel):
         self.users_with_operator: Dict[User, User] = {}
 
     def handle_message(self, user: User, message: str, attachments_files: list):

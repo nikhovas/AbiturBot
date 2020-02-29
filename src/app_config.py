@@ -1,9 +1,12 @@
 import src
+from src.sqlite.sqlite_database import SqliteDatabase
+from src.telegram.telegram_messenger import TelegramMessenger
+from src.kernel import Kernel
 
 
 USING_MODULES = {
-    'database': src.sqlite.sqlite_database.SqliteDatabase,
-    'messenger': src.telegram.telegram_messenger.TelegramMessenger
+    'database': SqliteDatabase,
+    'messenger': TelegramMessenger
 }
 
 BOT_CONFIG = {
@@ -12,5 +15,7 @@ BOT_CONFIG = {
 
 
 
-class RawFiles:
-    PHYS_TECH_SCHOOLS_INFO_FILE = "/data/phys_tech_schools_info.txt"
+
+
+
+kernel: Kernel = Kernel()
