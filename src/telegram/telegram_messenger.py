@@ -11,12 +11,16 @@ from . import utils
 
 bot = Bot(token='909308261:AAHJmfqOW2D5-epx5XePYHRuVuEgVML4Odw')
 dispatcher = Dispatcher(bot, storage=MemoryStorage())
+_kernel = None
 
 
 class TelegramMessenger(Messenger):
     def __init__(self, kernel):
         self.kernel = kernel
         super().__init__()
+
+        global _kernel
+        _kernel = kernel
 
     def start_pooling(self):
         executor.start_polling(dispatcher)
@@ -31,7 +35,8 @@ class TelegramMessenger(Messenger):
         await bot.send_message(msg.from_user.id, "Ваш номер телефона {}.".format(msg.contact['phone_number']),
                                reply_markup=ReplyKeyboardRemove())
 
-        # data base working
+        user_id = await _kernel.database.get_user_by_phone(msg.contact['phone_number'])
+        await _kernel.database.set_chat_id_for_user(user_id, msg.from_user.id)
 
     @dispatcher.message_handler(commands=['mailing'])
     async def process_admin_mailing(msg: types.Message):
@@ -51,7 +56,7 @@ class TelegramMessenger(Messenger):
     @dispatcher.callback_query_handler(lambda call: call.data == 'CHANGE_TEXT', state=utils.AdmMailing.check_text)
     async def change_mailing_text(call: types.CallbackQuery, state: FSMContext):
         await bot.edit_message_text("Введите новый текст", call.from_user.id,
-                                call.message.message_id)
+                                    call.message.message_id)
 
     @dispatcher.message_handler(content_types=['text'], state=utils.AdmMailing.check_text)
     async def get_new_text(msg: types.Message, state: FSMContext):
@@ -63,7 +68,6 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'MAIL', state=utils.AdmMailing.check_text)
     async def send_mailing_text(call: types.CallbackQuery, state: FSMContext):
-        pass
-
-
-
+        async with state.proxy() as data:
+            for i in await _kernel.database.get_all_chat_ids():
+                await bot.send_message(i, data['text'])

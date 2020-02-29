@@ -1,27 +1,25 @@
 from src.database import Database
-from sqlalchemy import create_engine
 import aiopg
 from src.models import *
 from typing import List
+import asyncio
 
 
 class SqliteDatabase(Database):
     def __init__(self, kernel):
         super().__init__()
 
-        self._dbname = "some name"
-        self._user = "user"
+        self.kernel = kernel
+
+        self._user = "user1"
         self._password = "11111111"
-        self._host = "fds"
+        self._dsn = 'postgresql://rc1c-5z1z7shu9girllca.mdb.yandexcloud.net:6432/db1'
 
         self._conn = None
         self._cur = None
 
     async def connect(self):
-        self._conn = await aiopg.connect(database=self._dbname,
-                                         user=self._user,
-                                         password=self._password,
-                                         host=self._host)
+        self._conn = await aiopg.connect(dsn=self._dsn, user=self._user, password=self._password)
         self._cur = await self._conn.cursor()
 
     def is_connected(self):
@@ -31,8 +29,8 @@ class SqliteDatabase(Database):
         if not self.is_connected():
             await self.connect()
 
-        await self._cur.execute('SELECT user_id FROM bot_user where phone = {}'.format(phone))
-        return await self._cur.fetchone()[0]
+        await self._cur.execute('SELECT user_id FROM bot_user where phone = \'{}\''.format(phone))
+        return (await self._cur.fetchone())[0]
 
     async def get_user_by_chat_id(self, chat_id: int):
         if not self.is_connected():
@@ -40,7 +38,7 @@ class SqliteDatabase(Database):
 
         try:
             await self._cur.execute('SELECT user_id FROM user_id_x_chat_id where chat_id = {}'.format(chat_id))
-            return await self._cur.fetchone()[0]
+            return (await self._cur.fetchone())[0]
         except ...:
             return None
 
@@ -78,14 +76,14 @@ class SqliteDatabase(Database):
             await self.connect()
 
         await self._cur.execute('SELECT type FROM bot_user where user_id = {}'.format(user_id))
-        return await self._cur.fetchone()[0] is 1
+        return (await self._cur.fetchone())[0] is 1
 
     async def does_user_exist(self, phone: str) -> bool:
         if not self.is_connected():
             await self.connect()
 
         await self._cur.execute('SELECT user_id FROM bot_user where phone = {}'.format(phone))
-        return await self._cur.fetchone()[0] is not None
+        return (await self._cur.fetchone())[0] is not None
 
     async def get_all_chat_ids(self) -> List[int]:
         if not self.is_connected():
@@ -103,12 +101,13 @@ class SqliteDatabase(Database):
         if not self.is_connected():
             await self.connect()
 
-        await self._cur.execute('SELECT chat_id FROM user_id_x_chat_id where user_id = {}'.format(user_id))
+        await self._cur.execute('SELECT chat_id FROM user_id_x_chat_id where user_id = %s', (user_id, ))
 
-        database_chat_id = self._cur.fetchone()
+        database_chat_id = await self._cur.fetchone()
 
         if database_chat_id is None:
-            await self._cur.execute('INSERT INTO user_id_x_chat_id(user_id, chat_id) VALUES ({}, {})',
+            await self._cur.execute('INSERT INTO user_id_x_chat_id(user_id, chat_id) VALUES (%s, %s)',
                                     (user_id, chat_id))
         elif database_chat_id is not chat_id:
-            await self._cur.execute('UPDATE user_id_x_chat_id SET chat_id = {} where user_id = {}'.format(chat_id, user_id))
+            await self._cur.execute('UPDATE user_id_x_chat_id SET chat_id = %s where user_id = %s',
+                                    (chat_id, user_id))
