@@ -47,9 +47,32 @@ class Direction(Model):
         self.phys_tech_school = phys_tech_school
 
 
-class CompetitionInfo:
-    def __init__(self, record_id: int, user: User, direction: Direction):
-        super().__init__(record_id)
+# class CompetitionInfo(Model):
+#     def __init__(self, record_id: int, user: User, direction: Direction, score: int):
+#         super().__init__(record_id)
+#
+#         self.user = user
+#         self.direction = direction
+#         self.score = score
 
-        self.user = user
-        self.direction = direction
+
+class UserComptetition:
+    def __init__(self, user_id: int, phys_tech_school_name: str, direction_name: str, comptetition_type: int, val: int,
+                 row_number: int):
+        self.user_id = user_id
+        self.phys_tech_school_name = phys_tech_school_name
+        self.comptetition_type = comptetition_type
+        self.val = val
+        self.row_number = row_number
+
+
+class CompetitionInfo:
+    def __init__(self, direction_id: int, user_id: int, surname: int, name: int, father_name: int,
+                 competition_type: int, sum: int):
+        self.direction_id = direction_id
+        self.user_id = user_id
+        self.surname = surname
+        self.name = name
+        self.father_name = father_name
+        self.competition_type = competition_type
+        self.sum = sum
