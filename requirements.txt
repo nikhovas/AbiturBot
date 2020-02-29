@@ -1,3 +1,5 @@
 SQLAlchemy
 db-sqlite3
 aiopg
+aiogram
+asyncio
