@@ -24,14 +24,22 @@ class User(Model):
         self.father_name = father_name
 
 
-class PhysTechSchool:
+class PhysTechSchool(Model):
     def __init__(self, record_id: int, name: str):
         super().__init__(record_id)
 
         self.name = name
 
 
-class Department:
+class Department(Model):
+    def __init__(self, record_id: int, name: str, phys_tech_school: PhysTechSchool):
+        super().__init__(record_id)
+
+        self.name = name
+        self.phys_tech_school = phys_tech_school
+
+
+class Direction(Model):
     def __init__(self, record_id: int, name: str, phys_tech_school: PhysTechSchool):
         super().__init__(record_id)
 
