@@ -12,9 +12,9 @@ from src.messages_parser import MessagesParser
 
 class Kernel:
     def __init__(self):
-        self.database = app_config.USING_MODULES['database']()
+        self.database = app_config.USING_MODULES['database'](self)
         # self.messenger = app_config.USING_MODULES['messenger'](self)
-        self.messenger = app_config.USING_MODULES['messenger'](self,)
+        self.messenger = app_config.USING_MODULES['messenger'](self)
 
         self.message_handler: MessageHandler = MessageHandler(self)
         self.operator_controller: OperatorController = OperatorController(self)
