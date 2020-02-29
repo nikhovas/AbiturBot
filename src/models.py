@@ -48,7 +48,8 @@ class Direction(Model):
 
 
 class CompetitionInfo:
-    def __init__(self, record_id: int, name: str):
+    def __init__(self, record_id: int, user: User, direction: Direction):
         super().__init__(record_id)
 
-        self.name = name
+        self.user = user
+        self.direction = direction

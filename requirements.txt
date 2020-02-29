@@ -1,2 +1,3 @@
 SQLAlchemy
 db-sqlite3
+aiopg
