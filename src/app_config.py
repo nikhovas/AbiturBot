@@ -6,3 +6,6 @@ USING_MODULES = {
     'messenger': src.telegram.telegram_messenger.TelegramMessenger
 }
 
+BOT_CONFIG = {
+    'API_TOKEN' : '909308261:AAHJmfqOW2D5-epx5XePYHRuVuEgVML4Odw'
+}

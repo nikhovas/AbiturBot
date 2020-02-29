@@ -1,10 +1,3 @@
-from aiogram import Bot, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import Dispatcher
-from aiogram.utils import executor
-
-
-import src.telegram.keyboards as keyboards
 from src.messenger import Messenger
 
 
