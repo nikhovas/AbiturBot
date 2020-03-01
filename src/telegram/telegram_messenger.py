@@ -133,6 +133,20 @@ class TelegramMessenger(Messenger):
                                           parse_mode='markdown')
         await utils.MainUser.show_comp_info.set()
 
+    @dispatcher.callback_query_handler(lambda call: call.data == 'MAIN_MENU', state=utils.MainUser.show_comp_info)
+    async def back_to_main_me(call: types.CallbackQuery, state:FSMContext):
+        await bot.delete_message(call.from_user.id, call.message.message_id)
+        is_admin = await _kernel.database.is_user_admin_by_chat_id(call.from_user.id)
+        if await _kernel.database.get_user_by_chat_id(call.from_user.id) is not None and not is_admin:
+            await bot.send_message(call.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+            await utils.MainUser.main.set()
+        elif not is_admin:
+            await bot.send_message(call.from_user.id, "Выберите действие", reply_markup=keyboards.mini_main)
+            await utils.MainUser.main.set()
+        else:
+            await bot.send_message(call.from_user.id,
+                                   "Вы - админ.\n/mailing - расслыка, \n/answer - ответить на очередь сообщений")
+
     @dispatcher.callback_query_handler(lambda call: len(call.data.split()) == 3, state=utils.MainUser.show_comp_info)
     async def do(call: types.CallbackQuery):
         data = map(int, call.data.split())
