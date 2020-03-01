@@ -57,25 +57,37 @@ class Direction(Model):
 
 
 class UserComptetition:
-    def __init__(self, user_id: int, phys_tech_school_name: str, direction_name: str, comptetition_type: int, val: int,
-                 row_number: int):
-        self.user_id = user_id
-        self.phys_tech_school_name = phys_tech_school_name
-        self.comptetition_type = comptetition_type
+    def __init__(self, user_id, direction_id, phys_tech_school_name: str, direction_name: str, competition_type: int,
+                 val: int, competition_name):
+        self._direction_id = direction_id
+        self._user_id = user_id
+        self._direction_name = direction_name
+        self._phys_tech_school_name = phys_tech_school_name
+        self._competition_type = competition_type
+        self._competition_name = competition_name
         self.val = val
-        self.row_number = row_number
+
+    def get_button_text(self):
+        return '{} {}'.format(self._phys_tech_school_name, self._direction_name)
+
+    def get_callback_data(self):
+        return '{} {} {}'.format(self._user_id, self._direction_id, self._competition_type)
+
+    def get_description(self):
+        return '*{} {}*\n Форма поступления:  {}\n Сумма баллов:            {}\n\n'.format(self._phys_tech_school_name, self._direction_name, self._competition_name, self.val)
 
 
 class CompetitionInfo:
     def __init__(self, direction_id: int, user_id: int, surname: int, name: int, father_name: int,
-                 competition_type: int, sum: int):
-        self.direction_id = direction_id
+                 competition_type: int, sum: int, rn = None):
+        self.diection_id = direction_id
         self.user_id = user_id
         self.surname = surname
         self.name = name
         self.father_name = father_name
         self.competition_type = competition_type
         self.sum = sum
+        self.rn = rn
 
 
 class RelativeCompetitionInfo:
@@ -89,14 +101,14 @@ class RelativeCompetitionInfo:
     def de_json(self) -> str:
         result = ''
         if self.first_user is not None:
-            result += '{} {} {} {}\n  ...\n'.format(self.first_user.surname, self.first_user.name,
-                                                    self.first_user.father_name, self.first_user.sum)
+            result += '{} {} {} {}\n  ...\n'.format(self.first_user.surname, self.first_user.name[0] + '.',
+                                                    self.first_user.father_name[0] + '.', self.first_user.sum)
         if self.previous_user is not None:
-            result += '{} {} {} {}\n'.format(self.previous_user.surname, self.previous_user.name,
-                                             self.previous_user.father_name, self.previous_user.sum)
-        result += '*{} {} {} {}*'.format(self.current_user.surname, self.current_user.name,
-                                         self.current_user.father_name, self.current_user.sum)
+            result += '{} {} {} {}\n'.format(self.previous_user.surname, self.previous_user.name[0] + '.',
+                                             self.previous_user.father_name[0] + '.', self.previous_user.sum)
+        result += '*{} {} {} {}*'.format(self.current_user.surname, self.current_user.name[0] + '.',
+                                         self.current_user.father_name[0] + '.', self.current_user.sum)
         if self.next_user is not None:
-            result += '\n{} {} {} {}'.format(self.next_user.surname, self.next_user.name,
-                                             self.next_user.father_name, self.next_user.sum)
+            result += '\n{} {} {} {}'.format(self.next_user.surname, self.next_user.name[0] + '.',
+                                             self.next_user.father_name[0] + '.', self.next_user.sum)
         return result
