@@ -2,7 +2,6 @@ from src.database import Database
 import aiopg
 from src.models import *
 from typing import List
-import asyncio
 
 
 class SqliteDatabase(Database):
@@ -85,13 +84,13 @@ class SqliteDatabase(Database):
         await self._cur.execute('SELECT user_id FROM bot_user where phone = {}'.format(phone))
         return (await self._cur.fetchone())[0] is not None
 
-    async def get_all_chat_ids(self) -> List[int]:
+    async def get_all_chat_ids(self) -> list:
         if not self.is_connected():
             await self.connect()
 
         await self._cur.execute('SELECT * FROM user_id_x_chat_id')
 
-        result = List[int]()
+        result = list()
         for i in await self._cur.fetchall():
             result.append(i[1])
 
