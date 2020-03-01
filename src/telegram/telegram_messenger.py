@@ -111,8 +111,7 @@ class TelegramMessenger(Messenger):
     # ответы на вопросы
     @dispatcher.message_handler(commands=['answer'])
     async def process_answer_admin_question(msg: types.Message):
-        user_id = await _kernel.database.get_user_by_chat_id(msg.from_user.id)
-        if await _kernel.database.is_user_admin(user_id):
+        if await _kernel.database.is_user_admin_by_chat_id(msg.from_user.id):
             if queue.empty():
                 await bot.send_message(msg.from_user.id, "Вопросов от абитуриентов нет.")
             else:
@@ -126,6 +125,13 @@ class TelegramMessenger(Messenger):
     async def send_next_question(call: types.CallbackQuery, state: FSMContext):
         question_chat_id = call.data.split()[1]
         await queue.put(QuestionInfo(call.message.text, question_chat_id))
+        question = await queue.get()
+        await bot.edit_message_text(question.text, call.from_user.id, call.message.message_id,
+                                    reply_markup=keyboards.get_questions_keyboard(question.chat_id))
+
+    @dispatcher.callback_query_handler(lambda call: call.data == 'DELETE_QUESTION',
+                                       state=utils.AdmAskQuestions.asking)
+    async def del_question_admin(call: types.CallbackQuery, state: FSMContext):
         question = await queue.get()
         await bot.edit_message_text(question.text, call.from_user.id, call.message.message_id,
                                     reply_markup=keyboards.get_questions_keyboard(question.chat_id))
