@@ -145,3 +145,12 @@ class SqliteDatabase(Database):
 
         await self._cur.execute('SELECT chat_id FROM user_id_x_chat_id where user_id = {}'.format(user_id))
         return (await self._cur.fetchone())[0]
+
+    async def is_user_admin_by_chat_id(self, chat_id) -> bool:
+        if not self.is_connected():
+            await self.connect()
+
+        await self._cur.execute('SELECT bot_user.type FROM user_id_x_chat_id '
+                                'INNER JOIN bot_user on user_id_x_chat_id.user_id = bot_user.user_id '
+                                'where chat_id = {}'.format(chat_id))
+        return (await self._cur.fetchone())[0] is 1
