@@ -65,7 +65,6 @@ class TelegramMessenger(Messenger):
     @dispatcher.message_handler(lambda msg: msg.text and msg.text == 'Информация о конкурсе',
                                 state=utils.MainUser.main)
     async def comp_info_but_send(msg: types.Message, state: FSMContext):
-        # TODO добавить api для базы данных get_all_user_competitions_by_chat_id
 
         user_id = await _kernel.database.get_user_by_chat_id(msg.from_user.id)
         competitions = await _kernel.database.get_all_user_competitions(user_id)
@@ -86,6 +85,20 @@ class TelegramMessenger(Messenger):
         relative_list = await _kernel.database.get_relative_list(*data)
         await bot.edit_message_text(relative_list.de_json(), call.from_user.id, call.message.message_id,
                                     reply_markup=keyboards.back, parse_mode='markdown')
+
+    @dispatcher.callback_query_handler(lambda call: call.data == 'BACK', state=utils.MainUser.show_comp_info)
+    async def do(call: types.CallbackQuery, state: FSMContext):
+        user_id = await _kernel.database.get_user_by_chat_id(call.from_user.id)
+        competitions = await _kernel.database.get_all_user_competitions(user_id)
+
+        text = ""
+        for i in competitions:
+            text += i.get_description()
+
+        text += 'Выберите направление для просмотра рейтинга:'
+        sent_msg = await bot.edit_message_text(text, call.from_user.id, call.message.message_id,
+                                               reply_markup=keyboards.get_competition_keyboard(competitions),
+                                               parse_mode='markdown')
 
     # Админка
     # Рассылка
