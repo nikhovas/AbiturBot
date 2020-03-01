@@ -191,7 +191,7 @@ class SqliteDatabase(Database):
         if not self.is_connected():
             await self.connect()
 
-        await self._cur.execute('''SELECT user_id, direction_id, phys_tech_school_name, direction_name,
+        await self._cur.execute('''SELECT uixci.user_id, direction_id, phys_tech_school_name, direction_name,
                                 competition_type, val, c.name
                                 FROM competitions_for_user as cfu 
                                 inner join competition as c on cfu.competition_type = c.competition_type_id

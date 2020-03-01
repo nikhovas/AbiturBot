@@ -15,7 +15,8 @@ asking_settings = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("О
 add_to_cash = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Да", callback_data="ADD_TO_CASH")).add(
     InlineKeyboardButton("Нет", callback_data="DONT_ADD_TO_CASH"))
 
-continue_answer = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Да", callback_data="CONTINUE_ANSWER")).add(
+continue_answer = InlineKeyboardMarkup(row_width=1).add(
+    InlineKeyboardButton("Да", callback_data="CONTINUE_ANSWER")).add(
     InlineKeyboardButton("Нет", callback_data="STOP_ANSWER"))
 
 markup_main = ReplyKeyboardMarkup(resize_keyboard=True).add(
@@ -24,7 +25,15 @@ markup_main = ReplyKeyboardMarkup(resize_keyboard=True).add(
     KeyboardButton('Задать вопрос о поступлении')
 )
 
+mini_main = ReplyKeyboardMarkup(resize_keyboard=True).add(
+    KeyboardButton('Задать вопрос о поступлении')
+)
+
 back = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Назад", callback_data='BACK'))
+
+is_correct = InlineKeyboardMarkup(row_width=1).add(
+    InlineKeyboardButton("Корректный ответ", callback_data='CORRECT')).add(
+    InlineKeyboardButton("Не корректный ответ", callback_data='NOT_CORRECT'))
 
 
 def get_questions_keyboard(chat_id: int) -> InlineKeyboardMarkup:
@@ -40,4 +49,3 @@ def get_competition_keyboard(competitions: List[UserComptetition]):
         keyboard.add(InlineKeyboardButton(i.get_button_text(), callback_data=i.get_callback_data()))
 
     return keyboard
-

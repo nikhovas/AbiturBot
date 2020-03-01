@@ -1,5 +1,6 @@
+import asyncio
 from asyncio.queues import Queue
-
+from src.messages_parser import MessagesParser
 from aiogram import Bot, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import Dispatcher
@@ -12,24 +13,10 @@ from . import keyboards
 from . import utils
 from .utils import QuestionInfo
 
-API_TOKEN = '909308261:AAHJmfqOW2D5-epx5XePYHRuVuEgVML4Odw'
-
-bot = Bot(token=API_TOKEN)
+bot = Bot(token='1140151216:AAHjz4jQm-jgk_iKBmWhZfdLbodnP-h0cU8')
 dispatcher = Dispatcher(bot, storage=MemoryStorage())
 _kernel = None
 queue = Queue(loop=dispatcher.loop)
-queue.put_nowait(QuestionInfo("question 1", 167813686))
-queue.put_nowait(QuestionInfo("question 2", 167813686))
-queue.put_nowait(QuestionInfo("question 3", 167813686))
-queue.put_nowait(QuestionInfo("question 4", 167813686))
-queue.put_nowait(QuestionInfo("question 5", 167813686))
-queue.put_nowait(QuestionInfo("question 6", 167813686))
-queue.put_nowait(QuestionInfo("question 7", 167813686))
-queue.put_nowait(QuestionInfo("question 8", 167813686))
-queue.put_nowait(QuestionInfo("question 9", 167813686))
-
-questions_cache = dict()
-
 
 class TelegramMessenger(Messenger):
     def __init__(self, kernel):
@@ -44,32 +31,97 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.message_handler(commands=['start'])
     async def process_start_command(msg: types.Message):
-        await bot.send_message(msg.from_user.id, "Добро пожаловать! Отправьте свой номер телефона.",
-                               reply_markup=keyboards.markup_request)
+        if msg.from_user.id not in (await _kernel.database.get_all_chat_ids()):
+            await bot.send_message(msg.from_user.id, "Добро пожаловать! Отправьте свой номер телефона.",
+                                   reply_markup=keyboards.markup_request)
+        else:
+            is_admin = await _kernel.database.is_user_admin_by_chat_id(msg.from_user.id)
+            if await _kernel.database.get_user_by_chat_id(msg.from_user.id) is not None and not is_admin:
+                await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+                await utils.MainUser.main.set()
+            elif not is_admin:
+                await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.mini_main)
+                await utils.MainUser.main.set()
+            else:
+                await bot.send_message(msg.from_user.id,
+                                       "Вы - админ.\n/mailing - расслыка, \n/answer - ответить на очередь сообщений")
 
     @dispatcher.message_handler(content_types=['contact'])
     async def process_get_contact(msg: types.Message):
         await bot.send_message(msg.from_user.id, "Ваш номер телефона {}.".format(msg.contact['phone_number']),
                                reply_markup=ReplyKeyboardRemove())
-        await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
         await utils.MainUser.main.set()
 
         user_id = await _kernel.database.get_user_by_phone(msg.contact['phone_number'])
-        await _kernel.database.set_chat_id_for_user(user_id, msg.from_user.id)
+        await asyncio.ensure_future(_kernel.database.set_chat_id_for_user(user_id, msg.from_user.id),
+                                    loop=dispatcher.loop)
+        is_admin = await _kernel.database.is_user_admin_by_chat_id(msg.from_user.id)
+        if await _kernel.database.get_user_by_chat_id(msg.from_user.id) is not None and not is_admin:
+            await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+            await utils.MainUser.main.set()
+        elif not is_admin:
+            await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.mini_main)
+            await utils.MainUser.main.set()
+        else:
+            await bot.send_message(msg.from_user.id,
+                                   "Вы - админ.\n/mailing - расслыка, \n/answer - ответить на очередь сообщений")
+
 
     @dispatcher.message_handler(lambda msg: msg.text and msg.text == 'Задать вопрос о поступлении',
                                 state=utils.MainUser.main)
-    async def ask_question(msg: types.Message, state: FSMContext):
-        await bot.send_message(msg.from_user.id, "Введите ваш вопрос", reply_markup=ReplyKeyboardRemove)
+    async def ask_question(msg: types.Message):
+        await bot.send_message(msg.from_user.id, "Введите ваш вопрос", reply_markup=ReplyKeyboardRemove())
+        await utils.UserAsk.get_vop.set()
 
-    # TODO работа с вопросами от Димаса
+    @dispatcher.message_handler(content_types=['text'], state=utils.UserAsk.get_vop)
+    async def get_nlp_answer(msg: types.Message, state: FSMContext):
+        reques = _kernel.messages_parser.handle_message(msg.text)
+        if reques is None:
+            await queue.put(QuestionInfo(msg.text, msg.from_user.id))
+            fut = asyncio.ensure_future(state.finish(), loop=dispatcher.loop)
+            await bot.send_message(msg.from_user.id, "Ваш вопрос перенаправлен оператору.")
+            await fut
+            if await _kernel.database.get_user_by_chat_id(msg.from_user.id) is not None:
+                await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+            else:
+                await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.mini_main)
+
+            await utils.MainUser.main.set()
+        else:
+            async with state.proxy() as data:
+                data['ques'] = msg.text
+            await bot.send_message(msg.from_user.id, reques, reply_markup=keyboards.is_correct)
+            await utils.UserAsk.is_correct.set()
+
+    @dispatcher.callback_query_handler(lambda call: call.data == 'NOT_CORRECT', state=utils.UserAsk.is_correct)
+    async def not_request_correct(call: types.CallbackQuery, state: FSMContext):
+        async with state.proxy() as data:
+            await queue.put(QuestionInfo(data['ques'], call.from_user.id))
+        await state.finish()
+        await bot.send_message(call.from_user.id, "Ваш вопрос перенаправлен оператору.")
+        if await _kernel.database.get_user_by_chat_id(call.from_user.id) is not None:
+            await bot.send_message(call.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+        else:
+            await bot.send_message(call.from_user.id, "Выберите действие", reply_markup=keyboards.mini_main)
+
+        await utils.MainUser.main.set()
+
+    @dispatcher.callback_query_handler(lambda call: call.data == 'CORRECT', state=utils.UserAsk.is_correct)
+    async def request_correct(call: types.CallbackQuery, state: FSMContext):
+        fut = asyncio.ensure_future(state.finish(), loop=dispatcher.loop)
+        if await _kernel.database.get_user_by_chat_id(call.from_user.id) is not None:
+            await bot.send_message(call.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+        else:
+            await bot.send_message(call.from_user.id, "Выберите действие", reply_markup=keyboards.mini_main)
+        await fut
+        await utils.MainUser.main.set()
+
 
     @dispatcher.message_handler(lambda msg: msg.text and msg.text == 'Информация о конкурсе',
                                 state=utils.MainUser.main)
-    async def comp_info_but_send(msg: types.Message, state: FSMContext):
+    async def comp_info_but_send(msg: types.Message):
 
-        user_id = await _kernel.database.get_user_by_chat_id(msg.from_user.id)
-        competitions = await _kernel.database.get_all_user_competitions(user_id)
+        competitions = await _kernel.database.get_all_user_competitions_by_chat_id(msg.from_user.id)
 
         text = ""
         for i in competitions:
@@ -82,14 +134,14 @@ class TelegramMessenger(Messenger):
         await utils.MainUser.show_comp_info.set()
 
     @dispatcher.callback_query_handler(lambda call: len(call.data.split()) == 3, state=utils.MainUser.show_comp_info)
-    async def do(call: types.CallbackQuery, state: FSMContext):
+    async def do(call: types.CallbackQuery):
         data = map(int, call.data.split())
         relative_list = await _kernel.database.get_relative_list(*data)
         await bot.edit_message_text(relative_list.de_json(), call.from_user.id, call.message.message_id,
                                     reply_markup=keyboards.back, parse_mode='markdown')
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'BACK', state=utils.MainUser.show_comp_info)
-    async def do(call: types.CallbackQuery, state: FSMContext):
+    async def do(call: types.CallbackQuery):
         user_id = await _kernel.database.get_user_by_chat_id(call.from_user.id)
         competitions = await _kernel.database.get_all_user_competitions(user_id)
 
@@ -98,9 +150,9 @@ class TelegramMessenger(Messenger):
             text += i.get_description()
 
         text += 'Выберите направление для просмотра рейтинга:'
-        sent_msg = await bot.edit_message_text(text, call.from_user.id, call.message.message_id,
-                                               reply_markup=keyboards.get_competition_keyboard(competitions),
-                                               parse_mode='markdown')
+        await bot.edit_message_text(text, call.from_user.id, call.message.message_id,
+                                    reply_markup=keyboards.get_competition_keyboard(competitions),
+                                    parse_mode='markdown')
 
     # Админка
     # Рассылка
@@ -122,7 +174,7 @@ class TelegramMessenger(Messenger):
         await utils.AdmMailing.check_text.set()
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'CHANGE_TEXT', state=utils.AdmMailing.check_text)
-    async def change_mailing_text(call: types.CallbackQuery, state: FSMContext):
+    async def change_mailing_text(call: types.CallbackQuery):
         await bot.edit_message_text("Введите новый текст", call.from_user.id,
                                     call.message.message_id)
 
@@ -136,8 +188,7 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'MAIL', state=utils.AdmMailing.check_text)
     async def send_mailing_text(call: types.CallbackQuery, state: FSMContext):
-        await bot.delete_message(call.from_user.id, call.message.message_id)
-        await bot.send_message(call.from_user.id, "Сообщение разослано.")
+        await bot.edit_message_text("Сообщение разослано.", call.from_user.id, call.message.message_id)
         async with state.proxy() as data:
             for i in await _kernel.database.get_all_chat_ids():
                 await bot.send_message(i, data['text'])
@@ -158,7 +209,7 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.callback_query_handler(lambda call: call.data.startswith('NEXT_QUESTION'),
                                        state=utils.AdmAskQuestions.asking)
-    async def send_next_question(call: types.CallbackQuery, state: FSMContext):
+    async def send_next_question(call: types.CallbackQuery):
         question_chat_id = call.data.split()[1]
         await queue.put(QuestionInfo(call.message.text, question_chat_id))
         question = await queue.get()
@@ -167,16 +218,15 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'DELETE_QUESTION',
                                        state=utils.AdmAskQuestions.asking)
-    async def del_question_admin(call: types.CallbackQuery, state: FSMContext):
+    async def del_question_admin(call: types.CallbackQuery):
         question = await queue.get()
         await bot.edit_message_text(question.text, call.from_user.id, call.message.message_id,
                                     reply_markup=keyboards.get_questions_keyboard(question.chat_id))
 
     @dispatcher.callback_query_handler(lambda call: call.data.startswith('ASK_QUESTION'),
                                        state=utils.AdmAskQuestions.asking)
-    async def del_question_admin(call: types.CallbackQuery, state: FSMContext):
-        await bot.delete_message(call.from_user.id, call.message.message_id)
-        await bot.send_message(call.from_user.id, "Введите ответ на вопрос")
+    async def del1_question_admin(call: types.CallbackQuery, state: FSMContext):
+        await bot.edit_message_text("Введите ответ на вопрос", call.from_user.id, call.message.message_id)
 
         async with state.proxy() as data:
             data['chat_id'] = call.data.split()[1]
@@ -194,7 +244,7 @@ class TelegramMessenger(Messenger):
         await utils.AdmAskQuestions.check_text.set()
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'CHANGE_TEXT', state=utils.AdmAskQuestions.check_text)
-    async def change_asking_text(call: types.CallbackQuery, state: FSMContext):
+    async def change_asking_text(call: types.CallbackQuery):
         await bot.edit_message_text("Введите новый текст", call.from_user.id,
                                     call.message.message_id)
 
@@ -208,9 +258,11 @@ class TelegramMessenger(Messenger):
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'MAIL', state=utils.AdmAskQuestions.check_text)
     async def send_asking_text(call: types.CallbackQuery, state: FSMContext):
-        await bot.delete_message(call.from_user.id, call.message.message_id)
-        await bot.send_message(call.from_user.id, "Ответ отправлен. Сохранить ответ на вопрос?",
-                               reply_markup=keyboards.add_to_cash)
+        await bot.edit_message_text("Ответ отправлен. Сохранить ответ на вопрос?", call.from_user.id,
+                                    call.message.message_id, reply_markup=keyboards.add_to_cash)
+        # await bot.delete_message(call.from_user.id, call.message.message_id)
+        # await bot.send_message(call.from_user.id, "Ответ отправлен. Сохранить ответ на вопрос?",
+        #                        reply_markup=keyboards.add_to_cash)
         await utils.AdmAskQuestions.send.set()
         async with state.proxy() as data:
             await bot.send_message(data['chat_id'],
@@ -220,12 +272,12 @@ class TelegramMessenger(Messenger):
     async def send_ask_to_cash(call: types.CallbackQuery, state: FSMContext):
         await bot.edit_message_text("Ответ добавлен в кэш. Продолжить отвечать на вопросы?", call.from_user.id,
                                     call.message.message_id, reply_markup=keyboards.continue_answer)
-        async with state.proxy() as data:
-            questions_cache[data['question']] = data['text']
         await utils.AdmAskQuestions.continue_answer.set()
+        async with state.proxy() as data:
+            _kernel.messages_parser.add_answered(data['question'], data['text'], 0)
 
     @dispatcher.callback_query_handler(lambda call: call.data == 'DONT_ADD_TO_CASH', state=utils.AdmAskQuestions.send)
-    async def dont_send_ask_to_cash(call: types.CallbackQuery, state: FSMContext):
+    async def dont_send_ask_to_cash(call: types.CallbackQuery):
         await bot.edit_message_text("Ответ не добавлен в кэш. Продолжить отвечать на вопросы?", call.from_user.id,
                                     call.message.message_id, reply_markup=keyboards.continue_answer)
 

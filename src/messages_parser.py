@@ -149,7 +149,7 @@ schedule_text = "График работы приёмной комиссии л�
 mainlink = "https://pk.mipt.ru/bachelor/2020_schedule/"
 arti += create_articles(header, marked, schedule_text, mainlink, "крайний срок подачи документов начало конец первая вторая волна")
 
-print(3)
+
 
 header = "ПРИЁМ НА ЦЕЛЕВОЕ ОБУЧЕНИЕ"
 marked = [' ']
@@ -258,7 +258,7 @@ past_pairs = [("Какое минимальное количество балл�
 for p in past_pairs:
     questi.append(Question(p[0], p[1], 0))
 
-
+print(3)
 def get_answer(question) -> (str, bool):
     result = ''
 
@@ -282,22 +282,24 @@ def get_answer(question) -> (str, bool):
 
     qdist = mindist
     if qdist > artdist:
-        return ('Кажется, ответ на твой вопрос находится в разделе {}: {}' \
-                'Ссылка: {}'.format(minart.header, minart.subheader, minart.link), artdist < 1.1)
+        print(artdist)
+        return ('Кажется, ответ на твой вопрос находится в разделе {}: {}\n' \
+                'Ссылка: {}'.format(minart.header, minart.subheader, minart.link), artdist < 1.3)
     elif minq.faq == 1:
-        return ('Похожий вопрос есть в разделе FAQ на сайте приемной комиссии: '
-                'Вопрос:'
-                '{}'
-                'Ответ:'
-                '{}'
-                'FAQ: https://pk.mipt.ru/bachelor/question-answer/'.format(minq.q, minq.a), qdist < 1.1)
+        print(qdist)
+        return ('Похожий вопрос есть в разделе FAQ на сайте приемной комиссии: \n'
+                'Вопрос:\n'
+                '{}\n'
+                'Ответ:\n'
+                '{}\n'
+                'FAQ: https://pk.mipt.ru/bachelor/question-answer/'.format(minq.q, minq.a), qdist < 1.3)
     else:
-        return ('Похожий вопрос ранее задавали экспертам'
-                'Вопрос:'
-                '{}'
-                'Ответ:'
-                '{}'
-                'https://pk.mipt.ru/faq/')
+        return ('Похожий вопрос ранее задавали экспертам\n'
+                'Вопрос:\n'
+                '{}\n'
+                'Ответ:\n'
+                '{}\n'
+                'https://pk.mipt.ru/faq/'.format(minq.q, minq.a), qdist < 1.3)
 
 
 class MessagesParser:
@@ -315,4 +317,10 @@ class MessagesParser:
         self.kernel = kernel
 
     def handle_message(self, message: str):
-        pass
+        answer, is_ok = get_answer(message)
+        print(answer)
+        return answer if is_ok else None
+
+    def add_answered(self, q, a, faq):
+        questi.append(Question(q, a, faq))
+
