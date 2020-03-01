@@ -171,3 +171,31 @@ class SqliteDatabase(Database):
                                 'INNER JOIN bot_user on user_id_x_chat_id.user_id = bot_user.user_id '
                                 'where chat_id = {}'.format(chat_id))
         return (await self._cur.fetchone())[0] is 1
+
+    async def get_all_user_competitions(self, user_id: int) -> List[UserComptetition]:
+        if not self.is_connected():
+            await self.connect()
+
+        await self._cur.execute('''SELECT user_id, direction_id, phys_tech_school_name, direction_name,
+                                competition_type, val, c.name
+                                FROM competitions_for_user as cfu inner join competition as c on cfu.competition_type = c.competition_type_id
+                                WHERE user_id = {}'''.format(user_id))
+
+        result = list()
+        for i in await self._cur.fetchall():
+            result.append(UserComptetition(*i))
+
+        return result
+
+    async def get_all_user_competitions_by_chat_id(self, chat_id: int) -> list:
+        if not self.is_connected():
+            await self.connect()
+
+        await self._cur.execute('''SELECT user_id, direction_id, phys_tech_school_name, direction_name,
+                                competition_type, val, c.name
+                                FROM competitions_for_user as cfu 
+                                inner join competition as c on cfu.competition_type = c.competition_type_id
+                                inner join user_id_x_chat_id as uixci on cfu.user_id = uixci.user_id
+                                WHERE chat_id = {}'''.format(chat_id))
+
+        return [UserComptetition(*i) for i in await self._cur.fetchall()]
