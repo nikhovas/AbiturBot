@@ -34,3 +34,5 @@ class Database:
     async def get_chat_id_by_user_id(self, user_id: int) -> int:
         pass
 
+    async def is_user_admin_by_chat_id(self, chat_id) -> bool:
+        pass
