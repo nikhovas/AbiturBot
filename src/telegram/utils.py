@@ -23,3 +23,7 @@ class AdmAskQuestions(StatesGroup):
     check_text = State()
     send = State()
     continue_answer = State()
+
+class UserAsk(StatesGroup):
+    get_vop = State()
+    is_correct = State()
