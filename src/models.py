@@ -76,3 +76,27 @@ class CompetitionInfo:
         self.father_name = father_name
         self.competition_type = competition_type
         self.sum = sum
+
+
+class RelativeCompetitionInfo:
+    def __init__(self, first_user, previous_user, current_user: CompetitionInfo,
+                 next_user):
+        self.first_user = first_user
+        self.previous_user = previous_user
+        self.current_user = current_user
+        self.next_user = next_user
+
+    def de_json(self) -> str:
+        result = ''
+        if self.first_user is not None:
+            result += '{} {} {} {}\n  ...\n'.format(self.first_user.surname, self.first_user.name,
+                                                   self.first_user.father_name, self.first_user.sum)
+        if self.previous_user is not None:
+            result += '{} {} {} {}\n'.format(self.previous_user.surname, self.previous_user.name,
+                                             self.previous_user.father_name, self.previous_user.sum)
+        result += '*{} {} {} {}*'.format(self.current_user.surname, self.current_user.name,
+                                         self.current_user.father_name, self.current_user.sum)
+        if self.next_user is not None:
+            result += '\n{} {} {} {}'.format(self.next_user.surname, self.next_user.name,
+                                                  self.next_user.father_name, self.next_user.sum)
+        return result
