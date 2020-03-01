@@ -74,7 +74,7 @@ class UserComptetition:
         return '{} {} {}'.format(self._user_id, self._direction_id, self._competition_type)
 
     def get_description(self):
-        return '*{} {}*\n Форма поступления:  {}\n Сумма баллов:            {}\n\n'.format(self._phys_tech_school_name, self._direction_name, self._competition_name, self.val)
+        return '*{} {}*\n Форма поступления:  {}\n Сумма баллов:             {}\n\n'.format(self._phys_tech_school_name, self._direction_name, self._competition_name, self.val)
 
 
 class CompetitionInfo:
@@ -101,14 +101,14 @@ class RelativeCompetitionInfo:
     def de_json(self) -> str:
         result = ''
         if self.first_user is not None:
-            result += '{} {} {} {}\n  ...\n'.format(self.first_user.surname, self.first_user.name[0] + '.',
+            result += '{}. {} {} {} {}\n  ...\n'.format(self.first_user.rn, self.first_user.surname, self.first_user.name[0] + '.',
                                                     self.first_user.father_name[0] + '.', self.first_user.sum)
         if self.previous_user is not None:
-            result += '{} {} {} {}\n'.format(self.previous_user.surname, self.previous_user.name[0] + '.',
+            result += '{}. {} {} {} {}\n'.format(self.previous_user.rn, self.previous_user.surname, self.previous_user.name[0] + '.',
                                              self.previous_user.father_name[0] + '.', self.previous_user.sum)
-        result += '*{} {} {} {}*'.format(self.current_user.surname, self.current_user.name[0] + '.',
+        result += '*{}. {} {} {} {}*'.format(self.current_user.rn, self.current_user.surname, self.current_user.name[0] + '.',
                                          self.current_user.father_name[0] + '.', self.current_user.sum)
         if self.next_user is not None:
-            result += '\n{} {} {} {}'.format(self.next_user.surname, self.next_user.name[0] + '.',
+            result += '\n{}. {} {} {} {}'.format(self.next_user.rn, self.next_user.surname, self.next_user.name[0] + '.',
                                              self.next_user.father_name[0] + '.', self.next_user.sum)
         return result
