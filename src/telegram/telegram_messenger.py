@@ -12,7 +12,9 @@ from . import keyboards
 from . import utils
 from .utils import QuestionInfo
 
-bot = Bot(token='909308261:AAHJmfqOW2D5-epx5XePYHRuVuEgVML4Odw')
+API_TOKEN = '909308261:AAHJmfqOW2D5-epx5XePYHRuVuEgVML4Odw'
+
+bot = Bot(token=API_TOKEN)
 dispatcher = Dispatcher(bot, storage=MemoryStorage())
 _kernel = None
 queue = Queue(loop=dispatcher.loop)

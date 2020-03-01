@@ -4,3 +4,6 @@ aiopg
 aiogram
 asyncio
 asyncpg
+nltk
+gensim
+pymorphy2
