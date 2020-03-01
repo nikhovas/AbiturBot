@@ -7,6 +7,15 @@ markup_request = ReplyKeyboardMarkup(resize_keyboard=True).add(
 mailing_settings = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Разослать", callback_data="MAIL")).add(
     InlineKeyboardButton("Править текст", callback_data="CHANGE_TEXT"))
 
+asking_settings = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Отправить", callback_data="MAIL")).add(
+    InlineKeyboardButton("Править текст", callback_data="CHANGE_TEXT"))
+
+add_to_cash = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Да", callback_data="ADD_TO_CASH")).add(
+    InlineKeyboardButton("Нет", callback_data="DONT_ADD_TO_CASH"))
+
+continue_answer = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Да", callback_data="CONTINUE_ANSWER")).add(
+    InlineKeyboardButton("Нет", callback_data="STOP_ANSWER"))
+
 markup_main = ReplyKeyboardMarkup(resize_keyboard=True).add(
     KeyboardButton('Информация о конкурсе')
 ).add(
