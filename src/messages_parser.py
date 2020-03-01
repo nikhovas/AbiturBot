@@ -21,8 +21,15 @@ from src.signals import *
 
 
 class MessagesParser:
+    class QuestionAnswerStructure:
+        def __init__(self, question: str, answer: str):
+            self.question = question
+            self.answer = answer
+            self.processed_question = None
+            self.processed_answer = None
+
     # maybe it is better to place it here
-    users_questions_and_answers: dict = {}
+    users_questions_and_answers: list = []
 
     def __init__(self, kernel):
         self.kernel = kernel

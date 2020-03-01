@@ -31,3 +31,6 @@ class Database:
     async def get_relative_list(self, user_id, direction_id: int, competition_type: int):
         pass
 
+    async def get_chat_id_by_user_id(self, user_id: int) -> int:
+        pass
+
