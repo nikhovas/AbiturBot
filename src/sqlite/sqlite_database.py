@@ -1,7 +1,9 @@
-from src.database import Database
-import aiopg
-from src.models import *
 from typing import List
+
+import aiopg
+
+from src.database import Database
+from src.models import *
 
 
 class SqliteDatabase(Database):
@@ -114,7 +116,7 @@ class SqliteDatabase(Database):
         if not self.is_connected():
             await self.connect()
 
-        await self._cur.execute('SELECT chat_id FROM user_id_x_chat_id where user_id = %s', (user_id, ))
+        await self._cur.execute('SELECT chat_id FROM user_id_x_chat_id where user_id = %s', (user_id,))
 
         database_chat_id = await self._cur.fetchone()
 
@@ -125,8 +127,9 @@ class SqliteDatabase(Database):
             await self._cur.execute('UPDATE user_id_x_chat_id SET chat_id = %s where user_id = %s',
                                     (chat_id, user_id))
 
-    async def get_relative_list(self, user_id: int, direction_id: int, competition_type: int) -> RelativeCompetitionInfo:
-        competition_list = await self.get_competition_list(direction_id,competition_type)
+    async def get_relative_list(self, user_id: int, direction_id: int,
+                                competition_type: int) -> RelativeCompetitionInfo:
+        competition_list = await self.get_competition_list_rn(direction_id, competition_type)
         first_row: CompetitionInfo = competition_list[0]
         last_row: CompetitionInfo = competition_list[-1]
         if first_row.user_id is user_id:
