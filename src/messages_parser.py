@@ -17,10 +17,15 @@ from typing import Dict
 from src.signals import *
 
 
+# there will lutiy Dima's code
+
+
 class MessagesParser:
+    # maybe it is better to place it here
+    users_questions_and_answers: dict = {}
+
     def __init__(self, kernel):
-        # super().__init__(kernel)
         self.kernel = kernel
 
-    def handle_message(self, message: str) -> Signal:
+    def handle_message(self, message: str):
         pass
