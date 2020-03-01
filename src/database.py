@@ -36,3 +36,6 @@ class Database:
 
     async def is_user_admin_by_chat_id(self, chat_id) -> bool:
         pass
+
+    async def get_all_user_competitions_by_chat_id(self, chat_id: int) -> list:
+        pass
