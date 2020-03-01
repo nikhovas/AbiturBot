@@ -13,11 +13,12 @@ markup_main = ReplyKeyboardMarkup(resize_keyboard=True).add(
     KeyboardButton('Задать вопрос о поступлении')
 )
 
-questions_keyboard = InlineKeyboardMarkup(row_width=2).insert(
-    InlineKeyboardButton("Ответить на этот вопрос", callback_data="ASK_QUESTION")).add(
-    InlineKeyboardButton('⬅️', callback_data="NEXT_QUESTION")).add(
-    InlineKeyboardButton('➡️', callback_data="PREV_QUESTION")).add(
-    InlineKeyboardButton("Удалить вопрос", callback_data="DELETE_QUESTION"))
+
+def get_questions_keyboard(chat_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(row_width=2).insert(
+        InlineKeyboardButton("Ответить на этот вопрос", callback_data="ASK_QUESTION {}".format(chat_id))).add(
+        InlineKeyboardButton('Пропустить', callback_data="NEXT_QUESTION {}".format(chat_id))).add(
+        InlineKeyboardButton("Удалить вопрос", callback_data="DELETE_QUESTION"))
 
 
 async def get_users_departments():
