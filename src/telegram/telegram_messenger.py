@@ -10,20 +10,21 @@ from aiogram.utils import executor
 from src.messenger import Messenger
 from . import keyboards
 from . import utils
+from .utils import QuestionInfo
 
 bot = Bot(token='909308261:AAHJmfqOW2D5-epx5XePYHRuVuEgVML4Odw')
 dispatcher = Dispatcher(bot, storage=MemoryStorage())
 _kernel = None
 queue = Queue(loop=dispatcher.loop)
-queue.put_nowait("question 1")
-queue.put_nowait("question 2")
-queue.put_nowait("question 3")
-queue.put_nowait("question 4")
-queue.put_nowait("question 5")
-queue.put_nowait("question 6")
-queue.put_nowait("question 7")
-queue.put_nowait("question 8")
-queue.put_nowait("question 9")
+queue.put_nowait(QuestionInfo("question 1", 167813686))
+queue.put_nowait(QuestionInfo("question 2", 167813686))
+queue.put_nowait(QuestionInfo("question 3", 167813686))
+queue.put_nowait(QuestionInfo("question 4", 167813686))
+queue.put_nowait(QuestionInfo("question 5", 167813686))
+queue.put_nowait(QuestionInfo("question 6", 167813686))
+queue.put_nowait(QuestionInfo("question 7", 167813686))
+queue.put_nowait(QuestionInfo("question 8", 167813686))
+queue.put_nowait(QuestionInfo("question 9", 167813686))
 
 
 class TelegramMessenger(Messenger):
@@ -115,5 +116,16 @@ class TelegramMessenger(Messenger):
             if queue.empty():
                 await bot.send_message(msg.from_user.id, "Вопросов от абитуриентов нет.")
             else:
-                question = queue.get()
-                await bot.send_message(msg.from_user.id, question, reply_markup=keyboards.questions_keyboard)
+                question = await queue.get()
+                await bot.send_message(msg.from_user.id, question.text,
+                                       reply_markup=keyboards.get_questions_keyboard(question.chat_id))
+                await utils.AdmAskQuestions.asking.set()
+
+    @dispatcher.callback_query_handler(lambda call: call.data.startswith('NEXT_QUESTION'),
+                                       state=utils.AdmAskQuestions.asking)
+    async def send_next_question(call: types.CallbackQuery, state: FSMContext):
+        question_chat_id = call.data.split()[1]
+        await queue.put(QuestionInfo(call.message.text, question_chat_id))
+        question = await queue.get()
+        await bot.edit_message_text(question.text, call.from_user.id, call.message.message_id,
+                                    reply_markup=keyboards.get_questions_keyboard(question.chat_id))
