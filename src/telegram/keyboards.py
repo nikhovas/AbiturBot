@@ -47,5 +47,5 @@ def get_competition_keyboard(competitions: List[UserComptetition]):
     keyboard = InlineKeyboardMarkup(row_width=1)
     for i in competitions:
         keyboard.add(InlineKeyboardButton(i.get_button_text(), callback_data=i.get_callback_data()))
-
+    keyboard.add(InlineKeyboardButton('Главное меню', callback_data='MAIN_MENU'))
     return keyboard
