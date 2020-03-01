@@ -1,4 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from src.models import *
+from typing import List
 
 markup_request = ReplyKeyboardMarkup(resize_keyboard=True).add(
     KeyboardButton('Отправить свой контакт ☎️', request_contact=True)
@@ -22,6 +24,8 @@ markup_main = ReplyKeyboardMarkup(resize_keyboard=True).add(
     KeyboardButton('Задать вопрос о поступлении')
 )
 
+back = InlineKeyboardMarkup(row_width=1).add(InlineKeyboardButton("Назад", callback_data='BACK'))
+
 
 def get_questions_keyboard(chat_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(row_width=2).insert(
@@ -30,5 +34,10 @@ def get_questions_keyboard(chat_id: int) -> InlineKeyboardMarkup:
         InlineKeyboardButton("Удалить вопрос", callback_data="DELETE_QUESTION"))
 
 
-async def get_users_departments():
-    pass
+def get_competition_keyboard(competitions: List[UserComptetition]):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    for i in competitions:
+        keyboard.add(InlineKeyboardButton(i.get_button_text(), callback_data=i.get_callback_data()))
+
+    return keyboard
+

@@ -9,6 +9,7 @@ class QuestionInfo:
 
 class MainUser(StatesGroup):
     main = State()
+    show_comp_info = State()
 
 
 class AdmMailing(StatesGroup):

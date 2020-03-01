@@ -38,16 +38,17 @@ class SqliteDatabase(Database):
         try:
             await self._cur.execute('SELECT user_id FROM user_id_x_chat_id where chat_id = {}'.format(chat_id))
             return (await self._cur.fetchone())[0]
-        except ...:
+        except Exception:
             return None
 
     async def get_all_user_competitions(self, user_id: int) -> List[UserComptetition]:
         if not self.is_connected():
             await self.connect()
 
-        await self._cur.execute('SELECT competition_element.direction_id, phys_tech_school_name, direction_name, '
-                                'competition_element.competition_type, sum'
-                                'FROM competitions_for_user WHERE user_id = {}'.format(user_id))
+        await self._cur.execute('''SELECT user_id, direction_id, phys_tech_school_name, direction_name,
+                                competition_type, val, c.name
+                                FROM competitions_for_user as cfu inner join competition as c on cfu.competition_type = c.competition_type_id
+                                WHERE user_id = {}'''.format(user_id))
 
         result = list()
         for i in await self._cur.fetchall():
@@ -59,9 +60,22 @@ class SqliteDatabase(Database):
         if not self.is_connected():
             await self.connect()
 
-        await self._cur.execute('SELECT competition_element.direction_id, phys_tech_school_name, direction_name, '
-                                'competition_element.competition_type, sum'
-                                'FROM competition_view WHERE direction_id = {} and competition_type = {}',
+        await self._cur.execute('''SELECT *
+                                FROM competition_view WHERE direction_id = %s and competition_type = %s''',
+                                (direction_id, competition_type))
+
+        result = list()
+        for i in await self._cur.fetchall():
+            result.append(CompetitionInfo(*i))
+
+        return result
+
+    async def get_competition_list_rn(self, direction_id: int, competition_type: int) -> List[CompetitionInfo]:
+        if not self.is_connected():
+            await self.connect()
+
+        await self._cur.execute('''SELECT *, row_number() over (order by sum desc) as rn
+                                FROM competition_view WHERE direction_id = %s and competition_type = %s''',
                                 (direction_id, competition_type))
 
         result = list()

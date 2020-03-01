@@ -49,12 +49,11 @@ class TelegramMessenger(Messenger):
     async def process_get_contact(msg: types.Message):
         await bot.send_message(msg.from_user.id, "Ваш номер телефона {}.".format(msg.contact['phone_number']),
                                reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
+        await utils.MainUser.main.set()
 
         user_id = await _kernel.database.get_user_by_phone(msg.contact['phone_number'])
         await _kernel.database.set_chat_id_for_user(user_id, msg.from_user.id)
-
-        await bot.send_message(msg.from_user.id, "Выберите действие", reply_markup=keyboards.markup_main)
-        await utils.MainUser.main.set()
 
     @dispatcher.message_handler(lambda msg: msg.text and msg.text == 'Задать вопрос о поступлении',
                                 state=utils.MainUser.main)
@@ -66,7 +65,27 @@ class TelegramMessenger(Messenger):
     @dispatcher.message_handler(lambda msg: msg.text and msg.text == 'Информация о конкурсе',
                                 state=utils.MainUser.main)
     async def comp_info_but_send(msg: types.Message, state: FSMContext):
-        pass
+        # TODO добавить api для базы данных get_all_user_competitions_by_chat_id
+
+        user_id = await _kernel.database.get_user_by_chat_id(msg.from_user.id)
+        competitions = await _kernel.database.get_all_user_competitions(user_id)
+
+        text = ""
+        for i in competitions:
+            text += i.get_description()
+
+        text += 'Выберите направление для просмотра рейтинга:'
+        sent_msg = await bot.send_message(msg.from_user.id, text,
+                                          reply_markup=keyboards.get_competition_keyboard(competitions),
+                                          parse_mode='markdown')
+        await utils.MainUser.show_comp_info.set()
+
+    @dispatcher.callback_query_handler(lambda call: len(call.data.split()) == 3, state=utils.MainUser.show_comp_info)
+    async def do(call: types.CallbackQuery, state: FSMContext):
+        data = map(int, call.data.split())
+        relative_list = await _kernel.database.get_relative_list(*data)
+        await bot.edit_message_text(relative_list.de_json(), call.from_user.id, call.message.message_id,
+                                    reply_markup=keyboards.back, parse_mode='markdown')
 
     # Админка
     # Рассылка
@@ -197,7 +216,8 @@ class TelegramMessenger(Messenger):
 
         await utils.AdmAskQuestions.continue_answer.set()
 
-    @dispatcher.callback_query_handler(lambda call: call.data == 'CONTINUE_ANSWER', state=utils.AdmAskQuestions.continue_answer)
+    @dispatcher.callback_query_handler(lambda call: call.data == 'CONTINUE_ANSWER',
+                                       state=utils.AdmAskQuestions.continue_answer)
     async def continue_answering(call: types.CallbackQuery, state: FSMContext):
         if queue.empty():
             await bot.edit_message_text("Вопросов от абитуриентов нет.", call.from_user.id, call.message.message_id)
@@ -205,12 +225,12 @@ class TelegramMessenger(Messenger):
         else:
             question = await queue.get()
             await bot.edit_message_text(question.text, call.from_user.id, call.message.message_id,
-                                   reply_markup=keyboards.get_questions_keyboard(question.chat_id))
+                                        reply_markup=keyboards.get_questions_keyboard(question.chat_id))
             await utils.AdmAskQuestions.asking.set()
 
-    @dispatcher.callback_query_handler(lambda call: call.data == 'STOP_ANSWER', state=utils.AdmAskQuestions.continue_answer)
+    @dispatcher.callback_query_handler(lambda call: call.data == 'STOP_ANSWER',
+                                       state=utils.AdmAskQuestions.continue_answer)
     async def stop_answering(call: types.CallbackQuery, state: FSMContext):
         await bot.delete_message(call.from_user.id, call.message.message_id)
 
         await state.finish()
-
