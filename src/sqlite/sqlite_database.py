@@ -110,3 +110,31 @@ class SqliteDatabase(Database):
         elif database_chat_id is not chat_id:
             await self._cur.execute('UPDATE user_id_x_chat_id SET chat_id = %s where user_id = %s',
                                     (chat_id, user_id))
+
+    async def get_relative_list(self, user_id: int, direction_id: int, competition_type: int) -> RelativeCompetitionInfo:
+        competition_list = await self.get_competition_list(direction_id,competition_type)
+        first_row: CompetitionInfo = competition_list[0]
+        last_row: CompetitionInfo = competition_list[-1]
+        if first_row.user_id is user_id:
+            if len(competition_list) is 1:
+                return RelativeCompetitionInfo(None, None, first_row, None)
+            else:
+                return RelativeCompetitionInfo(None, None, first_row, competition_list[1])
+        elif last_row.user_id is user_id:
+            if len(competition_list) is 2:
+                return RelativeCompetitionInfo(None, competition_list[0], competition_list[1], None)
+            else:
+                return RelativeCompetitionInfo(first_row, competition_list[-2], competition_list[-1], None)
+        else:
+            second_row: CompetitionInfo = competition_list[1]
+            if second_row.user_id is user_id:
+                return RelativeCompetitionInfo(None, first_row, second_row, competition_list[2])
+            else:
+                n = 0
+                for i in range(len(competition_list)):
+                    if competition_list[i].user_id is user_id:
+                        n = i
+                        break
+
+                return RelativeCompetitionInfo(competition_list[0], competition_list[n - 1], competition_list[n],
+                                               competition_list[n + 1])
