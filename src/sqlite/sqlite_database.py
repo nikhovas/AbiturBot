@@ -138,3 +138,10 @@ class SqliteDatabase(Database):
 
                 return RelativeCompetitionInfo(competition_list[0], competition_list[n - 1], competition_list[n],
                                                competition_list[n + 1])
+
+    async def get_chat_id_by_user_id(self, user_id: int) -> int:
+        if not self.is_connected():
+            await self.connect()
+
+        await self._cur.execute('SELECT chat_id FROM user_id_x_chat_id where user_id = {}'.format(user_id))
+        return (await self._cur.fetchone())[0]
